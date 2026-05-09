@@ -4,6 +4,7 @@
 # Final project: Bayesian Optimization in 1D for further application in D Flip-Flop c2q timing
 # SPICE simulation optimization.
 # This code was completed using an AI tool for learning, application, and debugging purposes.
+# The AI model use was Claude Sonnet 4.6 under perplexity's engine
 # * BO: Bayesian Optimization
 ###################################################################################################
 
