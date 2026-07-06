@@ -74,6 +74,7 @@ def build_covariance_matrix(arr1, arr2, ell: float, sigma: float):
     """
     arr1 = np.asarray(arr1)
     arr2 = np.asarray(arr2)
+
     n = len(arr1)
     m = len(arr2)
     cov = np.zeros((n, m))
@@ -149,6 +150,10 @@ def acq_function():
     return None
 
 np.linalg.slogdet()
+
+
+
+# Prioritize shifting kernel from squared exponential to constant or linear kernel
 
 
 # ========================= Code sample ========================
