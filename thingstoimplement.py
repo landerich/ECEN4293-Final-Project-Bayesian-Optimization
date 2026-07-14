@@ -41,22 +41,9 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
     
     return sigma**2 * np.exp(-(cov/lgt))
 
-
-# ===================================================================
-# +++++++++++++++++++++++ GP Posterior ++++++++++++++++++++++++++++++
-# ===================================================================
-
-# Things to create/do:
-
-# Training covariance matrix
-# Add noise on its diagonal
-# Build cross-covariance and test covariance
-# Solve the linear system
-# Compute posterior mean and posterior covariance
-
-# Previous steps completed
-
-# Covariance matrix
+# ==================================================================
+# ++++++++++++++++++++ Covariance matrix +++++++++++++++++++++++++++
+# ==================================================================
 
 def build_covariance_matrix(arr1, arr2, ell: float, sigma: float): 
     """
@@ -69,7 +56,7 @@ def build_covariance_matrix(arr1, arr2, ell: float, sigma: float):
         sigma: Argument needed for the squared exponential kernel.
 
     Returns:
-        narray : n x m matrix expressing the covariance of arr1 and arr2
+        cov : n x m matrix expressing the covariance of arr1 and arr2
 
     """
     arr1 = np.asarray(arr1)
@@ -85,6 +72,10 @@ def build_covariance_matrix(arr1, arr2, ell: float, sigma: float):
 
     return cov
 
+# ===================================================================
+# +++++++++++++++++++++++ GP Posterior ++++++++++++++++++++++++++++++
+# ===================================================================
+
 def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: float):
 
     """
@@ -94,7 +85,8 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
         X_tn: Shape (n,) for current 1D version.
 
     Returns:
-        Mean of shape (m,) and covariance shape (m, m
+        mu_s: Mean of shape (m,) and 
+        cov_posterior: Covariance shape (m, m)
     
     """
 
@@ -129,27 +121,59 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
 
 # Log marginal likelihood
 
-def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
+# def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
 
-    X_tn = np.asarray(X_train)
-    Y_tn = np.asarray(y_train)
+#     X_tn = np.asarray(X_train)
+#     Y_tn = np.asarray(y_train)
 
-    K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
-    C = K + noise_std**2 * np.eye(len(X_tn))
-    sign, logdet_c = np.linalg.slogdet(C)
+#     K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
+#     C = K + noise_std**2 * np.eye(len(X_tn))
+#     sign, logdet_c = np.linalg.slogdet(C)
     
-    # If sign < = 0 flag it since is a warning that something went wrong 
+#     # If sign < = 0 flag it since is a warning that something went wrong 
 
-    alpha = np.linalg.solve(C, Y_tn)
-    quad = Y_tn.T @ alpha
+#     alpha = np.linalg.solve(C, Y_tn)
+#     quad = Y_tn.T @ alpha
 
-    return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
+#     return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
 
-def acq_function():
 
-    return None
+# Define posterior std
+def posterior_std(cov_post):
+    """ Returns the posterior standard deviation from a covariance Matrix. 
+    Args:
+    -------------------
+    cov_post: Posterior covariance matrix.
+
+    Returns:
+    -------------------
+    Diagonal matrix with the posterior standard deviation.
+    """
+    cov_posterior = np.asarray(cov_post)
+    return np.sqrt(np.diag(cov_posterior))
+
+# ===================================================================
+# ++++++++++++++++++++++ Acquisition function +++++++++++++++++++++++
+# ===================================================================
+
+def acq_function(mu, posterior_std, kappa):     # Expected improvement is the best choice, but start with UCB
+
+    mu_acquisition = np.asarray(mu)
+    post_std_acquisition = np.asarray(posterior_std)
+
+
+    return mu_acquisition + kappa
 
 np.linalg.slogdet()
+
+
+
+
+# Have the code running for next week stable and have the data visualization
+
+
+
+# Catch an error or NaN for the Kernel switch
 
 
 
