@@ -68,7 +68,6 @@ def build_covariance_matrix(arr1, arr2, ell, sigma):
 
     return cov
 
-
 def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: float):
 
     """
@@ -111,9 +110,145 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
 
     return mu_s, cov_posterior
 
-mean, cov_post = gp_posterior(X_train=X_train, y_train=y_train, X_test=X_test, ell=ell, sigma=sigma, noise_std=noise_std)
-print(f"\nHere is the mu star from the gp_posterior function:\n{mean}")
+def posterior_std(cov_post):
+    """ Returns the posterior standard deviation from a covariance Matrix. 
+    Args:
+    -------------------
+    cov_post: Posterior covariance matrix.
 
-print(f"\nHere is the posterior covariance from the gp_posterior function:\n{cov_post}")
+    Returns:
+    -------------------
+    The posterior standard deviation vector.
+    """
+    cov_posterior = np.asarray(cov_post)
+    return np.sqrt(np.diag(cov_posterior))
 
-print(f"\nHere is the diagonal using np.diag(cov_post): {np.diag(cov_post)}")
+# ===================================================================
+# ++++++++++++++++++++++ Acquisition function +++++++++++++++++++++++
+# ===================================================================
+
+def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choice, but start with UCB
+    """ Returns the scoring vector of points to sample next.
+    Args:
+    ----------
+    mu: Posterior mean vector
+    std: Posterior standard deviation vector
+    kappa: Scaling factor for the Standard Deviation
+    
+    Returns:
+    ----------
+    A vector of values for future sampling
+    """
+    kappa = float(kappa)
+
+    mu_acquisition = np.asarray(mu)
+    std_acquisition = np.asarray(std)
+
+    if (mu_acquisition.shape != std_acquisition.shape):
+        raise ValueError("Mu and STD vectors must be the same size in order to compute UCB.")
+
+    return mu_acquisition + kappa * std_acquisition
+
+
+mu_s, cov_post = gp_posterior(X_train=X_train, y_train=y_train, X_test=X_test, ell=ell, sigma=sigma, noise_std=noise_std )
+std_s = posterior_std(cov_post)
+ucb_vals = acquisition_ucb(mu_s, std_s, 1.76549)
+next_idx = [np.argmax(ucb_vals)]
+
+print(f"\n\t------------------------------")
+print(f"MU_S:\t{mu_s}\n COV_POST:\t{cov_post}")
+print(f"\nSTD:\t{std_s}")
+print(f"\nUBC VALUES:\t{ucb_vals}")
+print(f"\nNEST_IDX:\t{next_idx}")
+print(f"\n\t------------------------------")
+
+
+
+
+
+# mean, cov_post = gp_posterior(X_train=X_train, y_train=y_train, X_test=X_test, ell=ell, sigma=sigma, noise_std=noise_std)
+# print(f"\nHere is the mu star from the gp_posterior function:\n{mean}")
+
+# print(f"\nHere is the posterior covariance from the gp_posterior function:\n{cov_post}")
+
+# print(f"\nHere is the diagonal using np.diag(cov_post): {np.diag(cov_post)}")
+
+# ========================= Code sample ========================
+
+
+# from __future__ import division
+# import numpy as np
+# import matplotlib.pyplot as pl
+
+# """ This is code for simple GP regression. It assumes a zero mean GP Prior """
+
+
+# # This is the true unknown function we are trying to approximate
+# f = lambda x: np.sin(0.9*x).flatten()
+# #f = lambda x: (0.25*(x**2)).flatten()
+
+
+# # Define the kernel
+# def kernel(a, b):
+#     """ GP squared exponential kernel """
+#     kernelParameter = 0.1
+#     sqdist = np.sum(a**2,1).reshape(-1,1) + np.sum(b**2,1) - 2*np.dot(a, b.T)
+#     return np.exp(-.5 * (1/kernelParameter) * sqdist)
+
+# N = 10         # number of training points.
+# n = 50         # number of test points.
+# s = 0.00005    # noise variance.
+
+# # Sample some input points and noisy versions of the function evaluated at
+# # these points. 
+# X = np.random.uniform(-5, 5, size=(N,1))
+# y = f(X) + s*np.random.randn(N)
+
+# K = kernel(X, X)
+# L = np.linalg.cholesky(K + s*np.eye(N))
+
+# # points we're going to make predictions at.
+# Xtest = np.linspace(-5, 5, n).reshape(-1,1)
+
+# # compute the mean at our test points.
+# Lk = np.linalg.solve(L, kernel(X, Xtest))
+# mu = np.dot(Lk.T, np.linalg.solve(L, y))
+
+# # compute the variance at our test points.
+# K_ = kernel(Xtest, Xtest)
+# s2 = np.diag(K_) - np.sum(Lk**2, axis=0)
+# s = np.sqrt(s2)
+
+
+# # PLOTS:
+# pl.figure(1)
+# pl.clf()
+# pl.plot(X, y, 'r+', ms=20)
+# pl.plot(Xtest, f(Xtest), 'b-')
+# pl.gca().fill_between(Xtest.flat, mu-3*s, mu+3*s, color="#dddddd")
+# pl.plot(Xtest, mu, 'r--', lw=2)
+# pl.savefig('predictive.png', bbox_inches='tight')
+# pl.title('Mean predictions plus 3 st.deviations')
+# pl.axis([-5, 5, -3, 3])
+
+# # draw samples from the prior at our test points.
+# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n))
+# f_prior = np.dot(L, np.random.normal(size=(n,10)))
+# pl.figure(2)
+# pl.clf()
+# pl.plot(Xtest, f_prior)
+# pl.title('Ten samples from the GP prior')
+# pl.axis([-5, 5, -3, 3])
+# pl.savefig('prior.png', bbox_inches='tight')
+
+# # draw samples from the posterior at our test points.
+# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n) - np.dot(Lk.T, Lk))
+# f_post = mu.reshape(-1,1) + np.dot(L, np.random.normal(size=(n,10)))
+# pl.figure(3)
+# pl.clf()
+# pl.plot(Xtest, f_post)
+# pl.title('Ten samples from the GP posterior')
+# pl.axis([-5, 5, -3, 3])
+# pl.savefig('post.png', bbox_inches='tight')
+
+# pl.show()

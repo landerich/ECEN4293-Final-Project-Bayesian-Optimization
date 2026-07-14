@@ -119,26 +119,30 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
 
     return mu_s, cov_posterior
 
-# Log marginal likelihood
+# ==================================================================
+# +++++++++++++++++++ Log marginal likelihood ++++++++++++++++++++++
+# ==================================================================
 
-# def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
+def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
 
-#     X_tn = np.asarray(X_train)
-#     Y_tn = np.asarray(y_train)
+    X_tn = np.asarray(X_train)
+    Y_tn = np.asarray(y_train)
 
-#     K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
-#     C = K + noise_std**2 * np.eye(len(X_tn))
-#     sign, logdet_c = np.linalg.slogdet(C)
+    K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
+    C = K + noise_std**2 * np.eye(len(X_tn))
+    sign, logdet_c = np.linalg.slogdet(C)
     
-#     # If sign < = 0 flag it since is a warning that something went wrong 
+    # If sign < = 0 flag it since is a warning that something went wrong 
 
-#     alpha = np.linalg.solve(C, Y_tn)
-#     quad = Y_tn.T @ alpha
+    alpha = np.linalg.solve(C, Y_tn)
+    quad = Y_tn.T @ alpha
 
-#     return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
+    return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
 
+# ===================================================================
+# +++++++++++++ Posterior Standard Deviation Vector +++++++++++++++++
+# ===================================================================
 
-# Define posterior std
 def posterior_std(cov_post):
     """ Returns the posterior standard deviation from a covariance Matrix. 
     Args:
@@ -147,7 +151,7 @@ def posterior_std(cov_post):
 
     Returns:
     -------------------
-    Diagonal matrix with the posterior standard deviation.
+    The posterior standard deviation vector.
     """
     cov_posterior = np.asarray(cov_post)
     return np.sqrt(np.diag(cov_posterior))
@@ -156,15 +160,37 @@ def posterior_std(cov_post):
 # ++++++++++++++++++++++ Acquisition function +++++++++++++++++++++++
 # ===================================================================
 
-def acq_function(mu, posterior_std, kappa):     # Expected improvement is the best choice, but start with UCB
+def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choice, but start with UCB
+    """ Returns the scoring vector of points to sample next.
+    Args:
+    ----------
+    mu: Posterior mean vector
+    std: Posterior standard deviation vector
+    kappa: Scaling factor for the Standard Deviation
+    
+    Returns:
+    ----------
+    A vector of values for future sampling
+    """
+    kappa = float(kappa)
 
     mu_acquisition = np.asarray(mu)
-    post_std_acquisition = np.asarray(posterior_std)
+    std_acquisition = np.asarray(std)
+
+    if (mu_acquisition.shape != std_acquisition.shape):
+        raise ValueError("Mu and STD vectors must be the same size in order to compute UCB.")
+
+    return mu_acquisition + kappa * std_acquisition
 
 
-    return mu_acquisition + kappa
+X_train = np.array([0.0, 0.15, 0.35, 0.55, 0.75, 0.95])
+X_test = np.linspace(0.0, 1.0, 100)
+y_train = np.array([0.00, 0.78, 0.81, -0.28, -1.02, -0.18])
 
-np.linalg.slogdet()
+ell = 0.25
+sigma = 1.0
+noise_std = 0.08
+
 
 
 
@@ -180,82 +206,3 @@ np.linalg.slogdet()
 # Prioritize shifting kernel from squared exponential to constant or linear kernel
 
 
-# ========================= Code sample ========================
-
-
-# from __future__ import division
-# import numpy as np
-# import matplotlib.pyplot as pl
-
-# """ This is code for simple GP regression. It assumes a zero mean GP Prior """
-
-
-# # This is the true unknown function we are trying to approximate
-# f = lambda x: np.sin(0.9*x).flatten()
-# #f = lambda x: (0.25*(x**2)).flatten()
-
-
-# # Define the kernel
-# def kernel(a, b):
-#     """ GP squared exponential kernel """
-#     kernelParameter = 0.1
-#     sqdist = np.sum(a**2,1).reshape(-1,1) + np.sum(b**2,1) - 2*np.dot(a, b.T)
-#     return np.exp(-.5 * (1/kernelParameter) * sqdist)
-
-# N = 10         # number of training points.
-# n = 50         # number of test points.
-# s = 0.00005    # noise variance.
-
-# # Sample some input points and noisy versions of the function evaluated at
-# # these points. 
-# X = np.random.uniform(-5, 5, size=(N,1))
-# y = f(X) + s*np.random.randn(N)
-
-# K = kernel(X, X)
-# L = np.linalg.cholesky(K + s*np.eye(N))
-
-# # points we're going to make predictions at.
-# Xtest = np.linspace(-5, 5, n).reshape(-1,1)
-
-# # compute the mean at our test points.
-# Lk = np.linalg.solve(L, kernel(X, Xtest))
-# mu = np.dot(Lk.T, np.linalg.solve(L, y))
-
-# # compute the variance at our test points.
-# K_ = kernel(Xtest, Xtest)
-# s2 = np.diag(K_) - np.sum(Lk**2, axis=0)
-# s = np.sqrt(s2)
-
-
-# # PLOTS:
-# pl.figure(1)
-# pl.clf()
-# pl.plot(X, y, 'r+', ms=20)
-# pl.plot(Xtest, f(Xtest), 'b-')
-# pl.gca().fill_between(Xtest.flat, mu-3*s, mu+3*s, color="#dddddd")
-# pl.plot(Xtest, mu, 'r--', lw=2)
-# pl.savefig('predictive.png', bbox_inches='tight')
-# pl.title('Mean predictions plus 3 st.deviations')
-# pl.axis([-5, 5, -3, 3])
-
-# # draw samples from the prior at our test points.
-# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n))
-# f_prior = np.dot(L, np.random.normal(size=(n,10)))
-# pl.figure(2)
-# pl.clf()
-# pl.plot(Xtest, f_prior)
-# pl.title('Ten samples from the GP prior')
-# pl.axis([-5, 5, -3, 3])
-# pl.savefig('prior.png', bbox_inches='tight')
-
-# # draw samples from the posterior at our test points.
-# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n) - np.dot(Lk.T, Lk))
-# f_post = mu.reshape(-1,1) + np.dot(L, np.random.normal(size=(n,10)))
-# pl.figure(3)
-# pl.clf()
-# pl.plot(Xtest, f_post)
-# pl.title('Ten samples from the GP posterior')
-# pl.axis([-5, 5, -3, 3])
-# pl.savefig('post.png', bbox_inches='tight')
-
-# pl.show()
