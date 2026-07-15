@@ -7,17 +7,30 @@ import scipy as sp
 # ++++++++++++++++++++++++ Testing Values ++++++++++++++++++++++++++++
 
 rng = np.random.default_rng()
-
 test_vector1 = rng.uniform(low=-4, high=4, size=4)
 test_vector2 = rng.uniform(low = -7, high = 7, size = 3)
 
-X_train = np.array([0.0, 0.15, 0.35, 0.55, 0.75, 0.95])
-X_test = np.linspace(0.0, 1.0, 100)
-y_train = np.array([0.00, 0.78, 0.81, -0.28, -1.02, -0.18])
+# ==================== Set 1 of testing values ======================
 
-ell = 0.25
-sigma = 1.0
-noise_std = 0.08
+X_train_one = np.array([0.0, 0.15, 0.35, 0.55, 0.75, 0.95])
+X_test_one = np.linspace(0.0, 1.0, 100)
+y_train_one = np.array([0.00, 0.78, 0.81, -0.28, -1.02, -0.18])
+
+ell_one = 0.25
+sigma_one = 1.0
+noise_std_one = 0.08
+kappa_one = 0.532
+
+# =================== Set 2 of testing values =======================
+
+X_train_two = np.array([0.00, 0.12, 0.27, 0.41, 0.63, 0.84])
+y_train_two = np.array([0.02, 0.66, 0.93, 0.61, -0.42, -0.95])
+X_test_two = np.linspace(0.0, 1.0, 100)
+
+ell_two = 0.20
+sigma_two = 1.0
+noise_std_two = 0.06
+kappa_two = 2.5
 
 # ====================================================================
 # ====================================================================
@@ -123,10 +136,6 @@ def posterior_std(cov_post):
     cov_posterior = np.asarray(cov_post)
     return np.sqrt(np.diag(cov_posterior))
 
-# ===================================================================
-# ++++++++++++++++++++++ Acquisition function +++++++++++++++++++++++
-# ===================================================================
-
 def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choice, but start with UCB
     """ Returns the scoring vector of points to sample next.
     Args:
@@ -150,9 +159,9 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
     return mu_acquisition + kappa * std_acquisition
 
 
-mu_s, cov_post = gp_posterior(X_train=X_train, y_train=y_train, X_test=X_test, ell=ell, sigma=sigma, noise_std=noise_std )
+mu_s, cov_post = gp_posterior(X_train=X_train_two, y_train=y_train_two, X_test=X_test_two, ell=ell_two, sigma=sigma_two, noise_std=noise_std_two)
 std_s = posterior_std(cov_post)
-ucb_vals = acquisition_ucb(mu_s, std_s, 1.76549)
+ucb_vals = acquisition_ucb(mu_s, std_s, kappa_two)
 next_idx = [np.argmax(ucb_vals)]
 
 print(f"\n\t------------------------------")
@@ -162,16 +171,17 @@ print(f"\nUBC VALUES:\t{ucb_vals}")
 print(f"\nNEST_IDX:\t{next_idx}")
 print(f"\n\t------------------------------")
 
+# =================================================================
+#  Test over 1/x function for kernel switch on asymptotic behavior
+# =================================================================
 
+def one_over_x(x):
+    return 1/x
 
+x_values = np.linspace(0, 8, 800)
 
+y_values = one_over_x(x_values)
 
-# mean, cov_post = gp_posterior(X_train=X_train, y_train=y_train, X_test=X_test, ell=ell, sigma=sigma, noise_std=noise_std)
-# print(f"\nHere is the mu star from the gp_posterior function:\n{mean}")
-
-# print(f"\nHere is the posterior covariance from the gp_posterior function:\n{cov_post}")
-
-# print(f"\nHere is the diagonal using np.diag(cov_post): {np.diag(cov_post)}")
 
 # ========================= Code sample ========================
 

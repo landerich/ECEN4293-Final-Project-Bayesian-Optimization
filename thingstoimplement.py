@@ -1,12 +1,5 @@
 import numpy as np
 import scipy as sp
-# import array as ar
-
-rng = np.random.default_rng()
-
-
-
-
 
 # 1. Kernel function
 # 
@@ -19,7 +12,7 @@ rng = np.random.default_rng()
 # 5. BO loop
 
 # ==============================================================
-# ++++++++++ Kernel function (squared exponential) +++++++++++++
+#             Kernel function (squared exponential)
 # ==============================================================
 
 def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma: float = 1.0) -> float:
@@ -41,9 +34,17 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
     
     return sigma**2 * np.exp(-(cov/lgt))
 
-# ==================================================================
-# ++++++++++++++++++++ Covariance matrix +++++++++++++++++++++++++++
-# ==================================================================
+# ==============================================================
+#                  Kernel function (Linear)
+# ==============================================================
+
+def linear_kernel():
+    
+    return None
+
+# ==============================================================
+#                        Covariance matrix
+# ==============================================================
 
 def build_covariance_matrix(arr1, arr2, ell: float, sigma: float): 
     """
@@ -72,9 +73,9 @@ def build_covariance_matrix(arr1, arr2, ell: float, sigma: float):
 
     return cov
 
-# ===================================================================
-# +++++++++++++++++++++++ GP Posterior ++++++++++++++++++++++++++++++
-# ===================================================================
+# ==============================================================
+#                           GP Posterior
+# ==============================================================
 
 def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: float):
 
@@ -119,9 +120,9 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
 
     return mu_s, cov_posterior
 
-# ==================================================================
-# +++++++++++++++++++ Log marginal likelihood ++++++++++++++++++++++
-# ==================================================================
+# ==============================================================
+#                       Log marginal likelihood
+# ==============================================================
 
 def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
 
@@ -139,9 +140,9 @@ def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float): 
 
     return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
 
-# ===================================================================
-# +++++++++++++ Posterior Standard Deviation Vector +++++++++++++++++
-# ===================================================================
+# ==============================================================
+#                 Posterior Standard Deviation Vector
+# ==============================================================
 
 def posterior_std(cov_post):
     """ Returns the posterior standard deviation from a covariance Matrix. 
@@ -156,9 +157,9 @@ def posterior_std(cov_post):
     cov_posterior = np.asarray(cov_post)
     return np.sqrt(np.diag(cov_posterior))
 
-# ===================================================================
-# ++++++++++++++++++++++ Acquisition function +++++++++++++++++++++++
-# ===================================================================
+# ==============================================================
+#                        Acquisition function
+# ==============================================================
 
 def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choice, but start with UCB
     """ Returns the scoring vector of points to sample next.
@@ -183,26 +184,29 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
     return mu_acquisition + kappa * std_acquisition
 
 
-X_train = np.array([0.0, 0.15, 0.35, 0.55, 0.75, 0.95])
-X_test = np.linspace(0.0, 1.0, 100)
-y_train = np.array([0.00, 0.78, 0.81, -0.28, -1.02, -0.18])
-
-ell = 0.25
-sigma = 1.0
-noise_std = 0.08
+# Note so self: Kernel combination is a much better idea and application
+# than just using a penalize and retreat approach if the BO over estimates the
+# next sample point.
 
 
+# If the function really behaves like 1/x, the most natural move is often to transform the inputs or 
+# outputs rather than forcing a basic kernel to learn the singularity directly.
 
 
-
-# Have the code running for next week stable and have the data visualization
-
-
-
-# Catch an error or NaN for the Kernel switch
+# Can the input be reparameterized so the asymptote is less singular?
+# Can the output be transformed so the GP sees a smoother function?
+# Do I need a composite kernel rather than a single kernel?
 
 
 
-# Prioritize shifting kernel from squared exponential to constant or linear kernel
+
+# Notes from Marcus:
+# 1. Have the code running for next week stable and have the data visualization
+
+# 2. Catch an error or NaN for the Kernel switch
+
+# 3. Prioritize shifting kernel from squared exponential to constant or linear kernel
+# Add to note No.3, there is no swiching, combination is better because it takes into account
+# the shape and trend of the function that is being explored, yielding better results.
 
 
