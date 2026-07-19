@@ -11,11 +11,14 @@ import scipy as sp
 #  
 # 5. BO loop
 
+# I denote variables with lowercase letters
+# and I denote constants with uppercase letters
+
 # ==============================================================
 #             Kernel function (squared exponential)
 # ==============================================================
 
-def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma: float = 1.0) -> float:
+def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma_se: float = 1.0) -> float:
     """ 
     Kernel function: Covariance function that returns the scalar covariance value.
     ----------
@@ -32,15 +35,14 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
     cov = (x1 - x2) ** 2
     lgt = 2*(length_scale**2)
     
-    return sigma**2 * np.exp(-(cov/lgt))
+    return sigma_se**2 * np.exp(-(cov/lgt))
 
 # ==============================================================
 #                  Kernel function (Linear)
 # ==============================================================
 
-def linear_kernel():
-    
-    return None
+def linear_kernel(x1: float, x2: float, sigma_linear:  float = 1.0) -> float:
+    return sigma_linear**2 * x1 * x2
 
 # ==============================================================
 #                        Covariance matrix
@@ -183,6 +185,18 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
 
     return mu_acquisition + kappa * std_acquisition
 
+# ==============================================================
+#                        Kernel Sum
+# ==============================================================
+
+def kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+    return k_se + k_linear
+
+# ==============================================================
+#                        Kernel Product
+# ==============================================================
 
 # Note so self: Kernel combination is a much better idea and application
 # than just using a penalize and retreat approach if the BO over estimates the
