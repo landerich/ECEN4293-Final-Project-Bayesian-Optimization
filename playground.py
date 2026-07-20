@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import pandas as pd
 
 
 # ====================================================================
@@ -174,17 +175,17 @@ def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
     return k_se * k_linear
 
-mu_s, cov_post = gp_posterior(X_train=X_train_two, y_train=y_train_two, X_test=X_test_two, ell=ell_two, sigma=sigma_two, noise_std=noise_std_two)
-std_s = posterior_std(cov_post)
-ucb_vals = acquisition_ucb(mu_s, std_s, kappa_two)
-next_idx = [np.argmax(ucb_vals)]
+# mu_s, cov_post = gp_posterior(X_train=X_train_two, y_train=y_train_two, X_test=X_test_two, ell=ell_two, sigma=sigma_two, noise_std=noise_std_two)
+# std_s = posterior_std(cov_post)
+# ucb_vals = acquisition_ucb(mu_s, std_s, kappa_two)
+# next_idx = [np.argmax(ucb_vals)]
 
-print(f"\n\t------------------------------")
-print(f"MU_S:\t{mu_s}\n COV_POST:\t{cov_post}")
-print(f"\nSTD:\t{std_s}")
-print(f"\nUBC VALUES:\t{ucb_vals}")
-print(f"\nNEST_IDX:\t{next_idx}")
-print(f"\n\t------------------------------")
+# print(f"\n\t------------------------------")
+# print(f"MU_S:\t{mu_s}\n COV_POST:\t{cov_post}")
+# print(f"\nSTD:\t{std_s}")
+# print(f"\nUBC VALUES:\t{ucb_vals}")
+# print(f"\nNEST_IDX:\t{next_idx}")
+# print(f"\n\t------------------------------")
 
 # =================================================================
 #  Test over 1/x function for kernel switch on asymptotic behavior
@@ -201,91 +202,20 @@ y_values = one_over_x(x_values)
 #                        Testing function
 # =================================================================
 
-def test_bo():
-
+def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, **kernel_parameters):
+    # Compute posterior
+    mu, cov = gp_posterior(X_train=train_data_x, y_train=train_data_y, X_test=test_data, noise_std=noise_std, kernel_function=kernel_function)
+    # Compute std 
+    standard_deviation = posterior_std(cov)
+    # Compute acquisition
+    acquisition = acquisition_ucb(mu=mu, std= standard_deviation, kappa=kappa)
+    # compute selected next point
+    # return point-level table, a summary dictionary 
 
     return None
 
+# If f(x) > some value, clamp it to a safe measurable value.
+# f(x, n=1) = n if 1/x > n else 1/x
 
-
-
-
-# ========================= Code sample ========================
-
-
-# from __future__ import division
-# import numpy as np
-# import matplotlib.pyplot as pl
-
-# """ This is code for simple GP regression. It assumes a zero mean GP Prior """
-
-
-# # This is the true unknown function we are trying to approximate
-# f = lambda x: np.sin(0.9*x).flatten()
-# #f = lambda x: (0.25*(x**2)).flatten()
-
-
-# # Define the kernel
-# def kernel(a, b):
-#     """ GP squared exponential kernel """
-#     kernelParameter = 0.1
-#     sqdist = np.sum(a**2,1).reshape(-1,1) + np.sum(b**2,1) - 2*np.dot(a, b.T)
-#     return np.exp(-.5 * (1/kernelParameter) * sqdist)
-
-# N = 10         # number of training points.
-# n = 50         # number of test points.
-# s = 0.00005    # noise variance.
-
-# # Sample some input points and noisy versions of the function evaluated at
-# # these points. 
-# X = np.random.uniform(-5, 5, size=(N,1))
-# y = f(X) + s*np.random.randn(N)
-
-# K = kernel(X, X)
-# L = np.linalg.cholesky(K + s*np.eye(N))
-
-# # points we're going to make predictions at.
-# Xtest = np.linspace(-5, 5, n).reshape(-1,1)
-
-# # compute the mean at our test points.
-# Lk = np.linalg.solve(L, kernel(X, Xtest))
-# mu = np.dot(Lk.T, np.linalg.solve(L, y))
-
-# # compute the variance at our test points.
-# K_ = kernel(Xtest, Xtest)
-# s2 = np.diag(K_) - np.sum(Lk**2, axis=0)
-# s = np.sqrt(s2)
-
-
-# # PLOTS:
-# pl.figure(1)
-# pl.clf()
-# pl.plot(X, y, 'r+', ms=20)
-# pl.plot(Xtest, f(Xtest), 'b-')
-# pl.gca().fill_between(Xtest.flat, mu-3*s, mu+3*s, color="#dddddd")
-# pl.plot(Xtest, mu, 'r--', lw=2)
-# pl.savefig('predictive.png', bbox_inches='tight')
-# pl.title('Mean predictions plus 3 st.deviations')
-# pl.axis([-5, 5, -3, 3])
-
-# # draw samples from the prior at our test points.
-# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n))
-# f_prior = np.dot(L, np.random.normal(size=(n,10)))
-# pl.figure(2)
-# pl.clf()
-# pl.plot(Xtest, f_prior)
-# pl.title('Ten samples from the GP prior')
-# pl.axis([-5, 5, -3, 3])
-# pl.savefig('prior.png', bbox_inches='tight')
-
-# # draw samples from the posterior at our test points.
-# L = np.linalg.cholesky(K_ + 1e-6*np.eye(n) - np.dot(Lk.T, Lk))
-# f_post = mu.reshape(-1,1) + np.dot(L, np.random.normal(size=(n,10)))
-# pl.figure(3)
-# pl.clf()
-# pl.plot(Xtest, f_post)
-# pl.title('Ten samples from the GP posterior')
-# pl.axis([-5, 5, -3, 3])
-# pl.savefig('post.png', bbox_inches='tight')
-
-# pl.show()
+# Goal here is to record: How many times it gets called
+# How close is the BO to the actual function.
