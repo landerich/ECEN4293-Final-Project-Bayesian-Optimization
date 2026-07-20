@@ -11,9 +11,6 @@ import scipy as sp
 #  
 # 5. BO loop
 
-# I denote variables with lowercase letters
-# and I denote constants with uppercase letters
-
 # ==============================================================
 #             Kernel function (squared exponential)
 # ==============================================================
@@ -48,7 +45,7 @@ def linear_kernel(x1: float, x2: float, sigma_linear:  float = 1.0) -> float:
 #                        Covariance matrix
 # ==============================================================
 
-def build_covariance_matrix(arr1, arr2, ell: float, sigma: float): 
+def build_covariance_matrix(arr1, arr2, kernel_function, **kernel_parameters): 
     """
     Covariance Matrix: Returns a kernel matrix n x m (len(arr1) x len(arr2)).
     ----------
@@ -71,9 +68,36 @@ def build_covariance_matrix(arr1, arr2, ell: float, sigma: float):
 
     for i, x1_i in enumerate(arr1):
         for j, x2_j in enumerate(arr2):
-            cov[i, j] = squared_exponential_kernel(x1_i, x2_j, ell, sigma)
+            cov[i, j] = kernel_function(x1_i, x2_j, **kernel_parameters)
 
     return cov
+
+# def build_covariance_matrix(arr1, arr2, ell: float, sigma: float): 
+#     """
+#     Covariance Matrix: Returns a kernel matrix n x m (len(arr1) x len(arr2)).
+#     ----------
+#     Args:
+#         arr1: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
+#         arr2: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
+#         ell: Argument needed for the squared exppnential kernel.
+#         sigma: Argument needed for the squared exponential kernel.
+
+#     Returns:
+#         cov : n x m matrix expressing the covariance of arr1 and arr2
+
+#     """
+#     arr1 = np.asarray(arr1)
+#     arr2 = np.asarray(arr2)
+
+#     n = len(arr1)
+#     m = len(arr2)
+#     cov = np.zeros((n, m))
+
+#     for i, x1_i in enumerate(arr1):
+#         for j, x2_j in enumerate(arr2):
+#             cov[i, j] = squared_exponential_kernel(x1_i, x2_j, ell, sigma)
+
+#     return cov
 
 # ==============================================================
 #                           GP Posterior
@@ -189,7 +213,7 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
 #                        Kernel Sum
 # ==============================================================
 
-def kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
+def combined_kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
     k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
     return k_se + k_linear
@@ -197,6 +221,13 @@ def kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
 # ==============================================================
 #                        Kernel Product
 # ==============================================================
+
+def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+    return k_se * k_linear
+
+
 
 # Note so self: Kernel combination is a much better idea and application
 # than just using a penalize and retreat approach if the BO over estimates the
