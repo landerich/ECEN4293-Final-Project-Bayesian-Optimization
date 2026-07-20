@@ -72,38 +72,11 @@ def build_covariance_matrix(arr1, arr2, kernel_function, **kernel_parameters):
 
     return cov
 
-# def build_covariance_matrix(arr1, arr2, ell: float, sigma: float): 
-#     """
-#     Covariance Matrix: Returns a kernel matrix n x m (len(arr1) x len(arr2)).
-#     ----------
-#     Args:
-#         arr1: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
-#         arr2: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
-#         ell: Argument needed for the squared exppnential kernel.
-#         sigma: Argument needed for the squared exponential kernel.
-
-#     Returns:
-#         cov : n x m matrix expressing the covariance of arr1 and arr2
-
-#     """
-#     arr1 = np.asarray(arr1)
-#     arr2 = np.asarray(arr2)
-
-#     n = len(arr1)
-#     m = len(arr2)
-#     cov = np.zeros((n, m))
-
-#     for i, x1_i in enumerate(arr1):
-#         for j, x2_j in enumerate(arr2):
-#             cov[i, j] = squared_exponential_kernel(x1_i, x2_j, ell, sigma)
-
-#     return cov
-
 # ==============================================================
 #                           GP Posterior
 # ==============================================================
 
-def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: float):
+def gp_posterior(X_train, y_train, X_test, noise_std: float, kernel_function, **kernel_parameters):
 
     """
     Gaussian Process Posterior:
@@ -126,9 +99,9 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
         raise ValueError("Matrices X_train and Y_train do not have the same dimensions" \
         "try with two matrices that have the same dimensions.")
 
-    K_xx = build_covariance_matrix(X_tn, X_tn, ell, sigma)
-    K_xs = build_covariance_matrix(X_tn, X_tt, ell, sigma)
-    K_ss = build_covariance_matrix(X_tt, X_tt, ell, sigma)
+    K_xx = build_covariance_matrix(X_tn, X_tn, kernel_function, **kernel_parameters)
+    K_xs = build_covariance_matrix(X_tn, X_tt, kernel_function, **kernel_parameters)
+    K_ss = build_covariance_matrix(X_tt, X_tt, kernel_function, **kernel_parameters)
     
     n = len(X_tn)
 
@@ -147,24 +120,24 @@ def gp_posterior(X_train, y_train, X_test, ell: float, sigma: float, noise_std: 
     return mu_s, cov_posterior
 
 # ==============================================================
-#                       Log marginal likelihood
+#                       Log marginal likelihood (Not necessary right now)
 # ==============================================================
 
-def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
+# def log_marginal(X_train, y_train, ell: float, sigma: float, noise_std: float):     # logp(y | X, theta) = -1/2 * y.T * C^-1 * y - 1/2 * (log(abs(C))) - n/2 * log(2 * pi)
 
-    X_tn = np.asarray(X_train)
-    Y_tn = np.asarray(y_train)
+#     X_tn = np.asarray(X_train)
+#     Y_tn = np.asarray(y_train)
 
-    K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
-    C = K + noise_std**2 * np.eye(len(X_tn))
-    sign, logdet_c = np.linalg.slogdet(C)
+#     K = build_covariance_matrix(X_tn, X_tn, ell, sigma)
+#     C = K + noise_std**2 * np.eye(len(X_tn))
+#     sign, logdet_c = np.linalg.slogdet(C)
     
-    # If sign < = 0 flag it since is a warning that something went wrong 
+#     # If sign < = 0 flag it since is a warning that something went wrong 
 
-    alpha = np.linalg.solve(C, Y_tn)
-    quad = Y_tn.T @ alpha
+#     alpha = np.linalg.solve(C, Y_tn)
+#     quad = Y_tn.T @ alpha
 
-    return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
+#     return -1/2 * quad - 1/2 * logdet_c - len(X_tn)/2 * np.log(2*np.pi)
 
 # ==============================================================
 #                 Posterior Standard Deviation Vector
@@ -181,7 +154,7 @@ def posterior_std(cov_post):
     The posterior standard deviation vector.
     """
     cov_posterior = np.asarray(cov_post)
-    return np.sqrt(np.diag(cov_posterior))
+    return np.sqrt(np.diag(cov_posterior))  # Floating point error negatives coming from the sqrt, check this later
 
 # ==============================================================
 #                        Acquisition function
