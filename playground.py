@@ -1,7 +1,8 @@
 import numpy as np
 import scipy as sp
 import pandas as pd
-
+import datetime
+import os
 
 # ====================================================================
 # ====================================================================
@@ -194,7 +195,7 @@ def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
 def one_over_x(x):
     return 1/x
 
-x_values = np.linspace(0, 8, 800)
+x_values = np.linspace(0, 8, 1600)
 
 y_values = one_over_x(x_values)
 
@@ -204,15 +205,78 @@ y_values = one_over_x(x_values)
 
 def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, **kernel_parameters):
     # Compute posterior
-    mu, cov = gp_posterior(X_train=train_data_x, y_train=train_data_y, X_test=test_data, noise_std=noise_std, kernel_function=kernel_function)
+    mu, cov = gp_posterior(X_train=train_data_x, y_train=train_data_y, X_test=test_data, noise_std=noise_std, kernel_function=kernel_function, **kernel_parameters)
     # Compute std 
     standard_deviation = posterior_std(cov)
     # Compute acquisition
     acquisition = acquisition_ucb(mu=mu, std= standard_deviation, kappa=kappa)
     # compute selected next point
+    next_point = np.argmax(acquisition)
+    x_next = test_data[next_point]
     # return point-level table, a summary dictionary 
 
+    # Point level needs:
+    # kernel_name
+    # x_test
+    # mu
+    # std
+    # acquisition
+    # selected_idx
+    # is_selected
+
+    # Summary keys
+    # kernel_name
+    # noise_std
+    # kappa
+    # next_idx
+    # x_next
+    # acquisition_max
+    # n_train
+    # n_test
+    # kernel hyperparameters 
+
+    point_data = {
+
+    }
+    summary = None
+
+    return point_data, summary
+
+def csv_and_plot():
+
     return None
+
+def point_logger(x_test, mu, std, acquisition, is_selected, filename="app_logs.csv"):
+
+    data = {
+        "X_test": [x_test],
+        "Mean (Mu)": [mu],
+        "Standard Deviation (std)": [std],
+        "Acquisition": [acquisition],
+        "Selected idx": [is_selected],
+        # "Selected": [idk]
+
+        }
+
+    df = pd.DataFrame(data)
+
+    file_exists = os.path.exists(filename)
+
+    df.to_csv(filename, mode='a', index=False, header=not file_exists)
+
+def summary_logger(kernel_name, noise_std, kappa, next_idx, x_next, acquisition_max):
+    data = {
+        "Date and Time": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+        "Kernel Name": [kernel_name],
+        "Noise Standard Deviation": [noise_std],
+        "Kappa": [kappa],
+        "Next idx": [next_idx],
+        "X next": [x_next],
+        "Max value acquisition": [acquisition_max]
+    }
+
+    return None
+
 
 # If f(x) > some value, clamp it to a safe measurable value.
 # f(x, n=1) = n if 1/x > n else 1/x
