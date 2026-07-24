@@ -211,52 +211,62 @@ def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data,
     # Compute acquisition
     acquisition = acquisition_ucb(mu=mu, std= standard_deviation, kappa=kappa)
     # compute selected next point
-    next_point = np.argmax(acquisition)
-    x_next = test_data[next_point]
+    next_idx = np.argmax(acquisition)
+    x_next = test_data[next_idx]
     # return point-level table, a summary dictionary 
 
-    # Point level needs:
-    # kernel_name
-    # x_test
-    # mu
-    # std
-    # acquisition
-    # selected_idx
-    # is_selected
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-    # Summary keys
-    # kernel_name
-    # noise_std
-    # kappa
-    # next_idx
-    # x_next
-    # acquisition_max
-    # n_train
-    # n_test
-    # kernel hyperparameters 
+    point_df = point_logger(test_data, kernel_name=kernel_name, mu=mu, std=standard_deviation, acquisition=acquisition, next_idx=next_idx, run_id=run_id)
+    summary_df = summary_logger(run_id=run_id, kernel_name=kernel_name, noise_std=noise_std, kappa=kappa, next_idx=next_idx, x_next=x_next, acquisition_max=acquisition[next_idx])
 
-    point_data = {
-
+    return {
+        "point_df": point_df,
+        "summary_df": summary_df,
+        "mu": mu,
+        "cov": cov,
+        "std": standard_deviation,
+        "acquisition": acquisition,
+        "next_idx": next_idx,
+        "x_next": x_next
     }
-    summary = None
-
-    return point_data, summary
 
 def csv_and_plot():
 
     return None
 
-def point_logger(x_test, mu, std, acquisition, is_selected, filename="app_logs.csv"):
+def point_logger(x_test, kernel_name, mu, std, acquisition, next_idx, run_id=None, filename="point_default.csv"):
+    """
+    
+    """
+    x_test = np.asarray(x_test)
+    mu = np.asarray(mu)
+    std = np.asarray(std)
+    acquisition = np.asarray(acquisition)
+
+    if not (x_test.shape[0] == mu.shape[0] == std.shape[0] == acquisition.shape[0]):
+        raise ValueError("Arrays must have the same length along axis 0.")
+
+    m = x_test.shape[0]
+    if run_id is None:
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    is_selected = np.zeros(m, dtype=bool)
+
+    if 0 <= next_idx < m:
+        is_selected[next_idx] = True
+    else:
+        raise IndexError("next_idx is out of bounds for the point logger.")
 
     data = {
-        "X_test": [x_test],
-        "Mean (Mu)": [mu],
-        "Standard Deviation (std)": [std],
-        "Acquisition": [acquisition],
-        "Selected idx": [is_selected],
-        # "Selected": [idk]
-
-        }
+        "run_id": [run_id] * m,
+        "kernel_name": [kernel_name] * m,
+        "x_0": x_test,
+        "mu": mu,
+        "std": std,
+        "acquisition": acquisition,
+        "selected": is_selected,
+    }
 
     df = pd.DataFrame(data)
 
@@ -264,18 +274,30 @@ def point_logger(x_test, mu, std, acquisition, is_selected, filename="app_logs.c
 
     df.to_csv(filename, mode='a', index=False, header=not file_exists)
 
-def summary_logger(kernel_name, noise_std, kappa, next_idx, x_next, acquisition_max):
+    return df
+
+
+def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acquisition_max, filename = "summary_default.csv"):
+    """
+    
+    """
     data = {
-        "Date and Time": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        "Kernel Name": [kernel_name],
-        "Noise Standard Deviation": [noise_std],
-        "Kappa": [kappa],
-        "Next idx": [next_idx],
-        "X next": [x_next],
-        "Max value acquisition": [acquisition_max]
+        "run_id": [run_id],
+        "kernel_name": [kernel_name],
+        "noise_std": [noise_std],
+        "kappa": [kappa],
+        "next_idx": [next_idx],
+        "x_next": [x_next],
+        "acquisition_max": [acquisition_max]
     }
 
-    return None
+    df = pd.DataFrame(data)
+
+    file_exists = os.path.isfile(filename)
+
+    df.to_csv(filename, mode = 'a', index=False, header=not file_exists)
+
+    return df
 
 
 # If f(x) > some value, clamp it to a safe measurable value.
