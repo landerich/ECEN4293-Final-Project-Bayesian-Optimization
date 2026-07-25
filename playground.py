@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import pandas as pd
+import matplotlib.pyplot as plt
 import datetime
 import os
 
@@ -195,9 +196,31 @@ def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
 def one_over_x(x):
     return 1/x
 
-x_values = np.linspace(0, 8, 1600)
+train_data_x = np.array([
+0.5,
+0.75,
+1.0,
+1.25,
+1.5,
+1.75,
+2.0,
+2.25,
+2.5,
+2.75,
+3.0,
+3.25,
+3.5,
+3.75,
+4.0,
+4.25,
+4.5,
+4.75,
+5.0,
+5.25,
+])
+train_data_y = one_over_x(train_data_x)
 
-y_values = one_over_x(x_values)
+test_data = np.linspace(0.2, 5.0, 200)
 
 # =================================================================
 #                        Testing function
@@ -231,9 +254,53 @@ def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data,
         "x_next": x_next
     }
 
-def csv_and_plot():
+def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
+                   train_data_x, train_data_y, test_data, noise_std, kappa,
+                   n_iterations, **kernel_parameters):
 
-    return None
+    train_x = np.asarray(train_data_x).copy()
+    train_y = np.asarray(train_data_y).copy()
+
+    results = []
+
+    for i in range(n_iterations):
+        result = test_bo(
+            kernel_function=kernel_function,
+            kernel_name=kernel_name,
+            train_data_x=train_x,
+            train_data_y=train_y,
+            test_data=test_data,
+            noise_std=noise_std,
+            kappa=kappa,
+            **kernel_parameters
+        )
+
+        x_next = result["x_next"]
+        y_next = objective_function(x_next)
+
+        train_x = np.append(train_x, x_next)
+        train_y = np.append(train_y, y_next)
+
+        results.append(result)
+
+    return results, train_x, train_y
+
+def plot_bo(test_data, mu, std, acquisition, next_idx):
+    fig, ax = plt.subplots(2, 1, figsize=(13, 10), sharex=True)
+
+    ax[0].plot(test_data, mu, label="Posterior mean")
+    ax[0].fill_between(test_data, mu - 2*std, mu + 2*std, alpha=0.2, label="Uncertainty")
+    ax[0].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
+    ax[0].set_title("Posterior")
+    ax[0].legend()
+
+    ax[1].plot(test_data, acquisition, label="Acquisition")
+    ax[1].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
+    ax[1].set_title("Acquisition")
+    ax[1].legend()
+
+    plt.tight_layout()
+    plt.show()
 
 def point_logger(x_test, kernel_name, mu, std, acquisition, next_idx, run_id=None, filename="point_default.csv"):
     """
@@ -276,7 +343,6 @@ def point_logger(x_test, kernel_name, mu, std, acquisition, next_idx, run_id=Non
 
     return df
 
-
 def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acquisition_max, filename = "summary_default.csv"):
     """
     
@@ -299,6 +365,19 @@ def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acqu
 
     return df
 
+results, final_x, final_y = run_1d_bo_loop(
+    objective_function=one_over_x,
+    kernel_function=squared_exponential_kernel,
+    kernel_name="RBF",
+    train_data_x=np.array([1.0, 2.0, 4.0]),
+    train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
+    test_data=np.linspace(0.2, 5.0, 200),
+    noise_std=0.01,
+    kappa=2.0,
+    n_iterations=5,
+    length_scale=1.0,
+    sigma_f=1.0
+)
 
 # If f(x) > some value, clamp it to a safe measurable value.
 # f(x, n=1) = n if 1/x > n else 1/x
