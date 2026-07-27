@@ -212,15 +212,10 @@ train_data_x = np.array([
 3.5,
 3.75,
 4.0,
-4.25,
-4.5,
-4.75,
-5.0,
-5.25,
 ])
 train_data_y = one_over_x(train_data_x)
 
-test_data = np.linspace(0.2, 5.0, 200)
+test_data = np.linspace(0.001, 6.0, 1000)
 
 # =================================================================
 #                        Testing function
@@ -281,6 +276,18 @@ def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
         train_y = np.append(train_y, y_next)
 
         results.append(result)
+
+   
+    plot_bo(
+        test_data=test_data,
+        mu=result["mu"],
+        std=result["std"],
+        acquisition=result["acquisition"],
+        next_idx=result["next_idx"],
+        objective_function=objective_function,
+        train_x=train_x,
+        train_y=train_y
+    )
 
     return results, train_x, train_y
 
@@ -375,7 +382,7 @@ results, final_x, final_y = run_1d_bo_loop(
     kernel_name="Square Exponential",
     train_data_x=np.array([1.0, 2.0, 4.0]),
     train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
-    test_data=np.linspace(0.2, 5.0, 200),
+    test_data=np.linspace(0.001, 5.0, 200),
     noise_std=0.01,
     kappa=2.0,
     n_iterations=5,
@@ -391,6 +398,12 @@ def edge_case():    # What is a safe measurable value (i.e., how high off in the
 
 # If f(x) > some value, clamp it to a safe measurable value.
 # f(x, n=1) = n if 1/x > n else 1/x
+
+# Jul 27th 2026
+# Look for the best combination of c2q that is under a certain threshold
+# Slice Z axis at a chosen safe threshold
+# Start from the corner of the plane and move towards the slope until the c2q latches
+# Extend the code for 2D usage Quadrant 1 of 1/xy
 
 # Goal here is to record: How many times it gets called
 # How close is the BO to the actual function.

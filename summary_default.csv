@@ -1,6 +1,26 @@
 run_id,kernel_name,noise_std,kappa,next_idx,x_next,acquisition_max
+1,Square Exponential,0.01,2.0,0,0.001,3.989745923883234
+2,Square Exponential,0.01,2.0,0,0.001,993.0815264315295
+3,Square Exponential,0.01,2.0,0,0.001,996.5327926131976
+4,Square Exponential,0.01,2.0,0,0.001,997.6879437952101
+5,Square Exponential,0.01,2.0,0,0.001,998.2662822126309
 1,Square Exponential,0.01,2.0,0,0.2,2.0076947760607444
 2,Square Exponential,0.01,2.0,0,0.2,5.0188806049989685
 3,Square Exponential,0.01,2.0,0,0.2,5.013582751571818
 4,Square Exponential,0.01,2.0,0,0.2,5.011174180677538
 5,Square Exponential,0.01,2.0,0,0.2,5.0097204264695945
+1,Square Exponential,0.01,2.0,0,0.2,2.0076947760607444
+2,Square Exponential,0.01,2.0,0,0.2,5.0188806049989685
+3,Square Exponential,0.01,2.0,0,0.2,5.013582751571818
+4,Square Exponential,0.01,2.0,0,0.2,5.011174180677538
+5,Square Exponential,0.01,2.0,0,0.2,5.0097204264695945
+1,Square Exponential,0.01,2.0,0,0.2,2.0076947760607444
+2,Square Exponential,0.01,2.0,0,0.2,5.0188806049989685
+3,Square Exponential,0.01,2.0,0,0.2,5.013582751571818
+4,Square Exponential,0.01,2.0,0,0.2,5.011174180677538
+5,Square Exponential,0.01,2.0,0,0.2,5.0097204264695945
+1,Square Exponential,0.01,2.0,0,0.001,2.132492380536673
+2,Square Exponential,0.01,2.0,0,0.001,999.8363728198481
+3,Square Exponential,0.01,2.0,0,0.001,999.9223203787201
+4,Square Exponential,0.01,2.0,0,0.001,999.9503307053857
+5,Square Exponential,0.01,2.0,0,0.001,999.964087107427
