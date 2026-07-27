@@ -1,0 +1,6 @@
+run_id,kernel_name,noise_std,kappa,next_idx,x_next,acquisition_max
+1,Square Exponential,0.01,2.0,0,0.2,2.0076947760607444
+2,Square Exponential,0.01,2.0,0,0.2,5.0188806049989685
+3,Square Exponential,0.01,2.0,0,0.2,5.013582751571818
+4,Square Exponential,0.01,2.0,0,0.2,5.011174180677538
+5,Square Exponential,0.01,2.0,0,0.2,5.0097204264695945

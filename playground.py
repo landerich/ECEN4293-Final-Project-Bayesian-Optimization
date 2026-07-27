@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
-import datetime
+import datetime as dt
 import os
 
 # ====================================================================
@@ -226,7 +226,7 @@ test_data = np.linspace(0.2, 5.0, 200)
 #                        Testing function
 # =================================================================
 
-def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, **kernel_parameters):
+def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, run_id, **kernel_parameters):
     # Compute posterior
     mu, cov = gp_posterior(X_train=train_data_x, y_train=train_data_y, X_test=test_data, noise_std=noise_std, kernel_function=kernel_function, **kernel_parameters)
     # Compute std 
@@ -237,8 +237,6 @@ def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data,
     next_idx = np.argmax(acquisition)
     x_next = test_data[next_idx]
     # return point-level table, a summary dictionary 
-
-    run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     point_df = point_logger(test_data, kernel_name=kernel_name, mu=mu, std=standard_deviation, acquisition=acquisition, next_idx=next_idx, run_id=run_id)
     summary_df = summary_logger(run_id=run_id, kernel_name=kernel_name, noise_std=noise_std, kappa=kappa, next_idx=next_idx, x_next=x_next, acquisition_max=acquisition[next_idx])
@@ -272,6 +270,7 @@ def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
             test_data=test_data,
             noise_std=noise_std,
             kappa=kappa,
+            run_id=i + 1,
             **kernel_parameters
         )
 
@@ -285,16 +284,23 @@ def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
 
     return results, train_x, train_y
 
-def plot_bo(test_data, mu, std, acquisition, next_idx):
+def plot_bo(test_data, mu, std, acquisition, next_idx, objective_function, train_x=None, train_y=None):
+    true_y = objective_function(test_data)
+
     fig, ax = plt.subplots(2, 1, figsize=(13, 10), sharex=True)
 
-    ax[0].plot(test_data, mu, label="Posterior mean")
-    ax[0].fill_between(test_data, mu - 2*std, mu + 2*std, alpha=0.2, label="Uncertainty")
+    ax[0].plot(test_data, true_y, label="True curve: 1/x", color="black", linewidth=2)
+    ax[0].plot(test_data, mu, label="Posterior mean", color="tab:blue")
+    ax[0].fill_between(test_data, mu - 2*std, mu + 2*std, alpha=0.2, label="Uncertainty", color="tab:blue")
     ax[0].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
-    ax[0].set_title("Posterior")
+
+    if train_x is not None and train_y is not None:
+        ax[0].scatter(train_x, train_y, color="green", s=50, label="Observed points", zorder=5)
+
+    ax[0].set_title("Posterior vs True Curve")
     ax[0].legend()
 
-    ax[1].plot(test_data, acquisition, label="Acquisition")
+    ax[1].plot(test_data, acquisition, label="Acquisition", color="tab:orange")
     ax[1].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
     ax[1].set_title("Acquisition")
     ax[1].legend()
@@ -315,8 +321,6 @@ def point_logger(x_test, kernel_name, mu, std, acquisition, next_idx, run_id=Non
         raise ValueError("Arrays must have the same length along axis 0.")
 
     m = x_test.shape[0]
-    if run_id is None:
-        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     is_selected = np.zeros(m, dtype=bool)
 
@@ -368,7 +372,7 @@ def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acqu
 results, final_x, final_y = run_1d_bo_loop(
     objective_function=one_over_x,
     kernel_function=squared_exponential_kernel,
-    kernel_name="RBF",
+    kernel_name="Square Exponential",
     train_data_x=np.array([1.0, 2.0, 4.0]),
     train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
     test_data=np.linspace(0.2, 5.0, 200),
@@ -376,8 +380,14 @@ results, final_x, final_y = run_1d_bo_loop(
     kappa=2.0,
     n_iterations=5,
     length_scale=1.0,
-    sigma_f=1.0
+    sigma=1.0
 )
+
+def edge_case():    # What is a safe measurable value (i.e., how high off in the y axis is acceptable and usable in practice?)
+
+    veredict = None
+    
+    return veredict
 
 # If f(x) > some value, clamp it to a safe measurable value.
 # f(x, n=1) = n if 1/x > n else 1/x
