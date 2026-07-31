@@ -23,7 +23,7 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
         x1: Scalar input 1
         x2: Scalar input 2
         length_scale: 
-        sigma: signal variance / amplitude
+        sigma_se: signal variance / amplitude
 
     Returns:
         float: Covariance between x1 and x2 under the squared sum exponential kernel.
@@ -186,18 +186,18 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
 #                        Kernel Sum
 # ==============================================================
 
-def combined_kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
-    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
-    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+def combined_kernel_sum(xin1, xin2, ell_se, sigma_se, sigma_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sigma_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se + k_linear
 
 # ==============================================================
 #                        Kernel Product
 # ==============================================================
 
-def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
-    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
-    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sigma_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
 
 

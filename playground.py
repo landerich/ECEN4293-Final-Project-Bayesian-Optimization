@@ -41,7 +41,7 @@ kappa_two = 2.5
 np.set_printoptions(precision=2, suppress=True)
 
 
-def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma: float = 1.0) -> float:
+def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma_se: float = 1.0) -> float:
     """ 
     Kernel function: Covariance function that returns the scalar covariance value.
     ----------
@@ -49,7 +49,7 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
         x1: Scalar input 1
         x2: Scalar input 2
         length_scale: 
-        sigma: signal variance / amplitude
+        sigma_se: signal variance / amplitude
 
     Returns:
         float: Covariance between x1 and x2 under the squared sum exponential kernel.
@@ -58,7 +58,7 @@ def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, 
     cov = (x1 - x2) ** 2
     lgt = 2*(length_scale**2)
     
-    return sigma**2 * np.exp(-(cov/lgt))
+    return sigma_se**2 * np.exp(-(cov/lgt))
 
 def linear_kernel(x1: float, x2: float, sigma_linear:  float = 1.0) -> float:
     return sigma_linear**2 * x1 * x2
@@ -77,8 +77,8 @@ def build_covariance_matrix(arr1, arr2, kernel_function, **kernel_parameters):
         cov : n x m matrix expressing the covariance of arr1 and arr2
 
     """
-    arr1 = np.asarray(arr1)
-    arr2 = np.asarray(arr2)
+    arr1 = np.atleast_1d(arr1)
+    arr2 = np.atleast_1d(arr2)
 
     n = len(arr1)
     m = len(arr2)
@@ -167,14 +167,14 @@ def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choi
 
     return mu_acquisition + kappa * std_acquisition
 
-def combined_kernel_sum(xin1, xin2, ell_se, sig_se, sig_linear):
-    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
-    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+def combined_kernel_sum(xin1, xin2, ell_se, sigma_se, sigma_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sigma_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se + k_linear
 
-def combined_kernel_product(xin1, xin2, ell_se, sig_se, sig_linear):
-    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sig_se)
-    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sig_linear)
+def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
+    k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length_scale= ell_se, sigma_se= sigma_se)
+    k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
 
 # mu_s, cov_post = gp_posterior(X_train=X_train_two, y_train=y_train_two, X_test=X_test_two, ell=ell_two, sigma=sigma_two, noise_std=noise_std_two)
@@ -223,28 +223,36 @@ test_data = np.linspace(0.001, 6.0, 1000)
 
 def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, run_id, **kernel_parameters):
     # Compute posterior
-    mu, cov = gp_posterior(X_train=train_data_x, y_train=train_data_y, X_test=test_data, noise_std=noise_std, kernel_function=kernel_function, **kernel_parameters)
+    mu, cov = gp_posterior(X_train=train_data_x,
+                           y_train=train_data_y,
+                           X_test=test_data,
+                           noise_std=noise_std,
+                           kernel_function=kernel_function,
+                           **kernel_parameters)
+    
     # Compute std 
     standard_deviation = posterior_std(cov)
+
     # Compute acquisition
-    acquisition = acquisition_ucb(mu=mu, std= standard_deviation, kappa=kappa)
+    acquisition = acquisition_ucb(mu=mu,
+                                  std= standard_deviation,
+                                  kappa=kappa)
+
     # compute selected next point
     next_idx = np.argmax(acquisition)
     x_next = test_data[next_idx]
     # return point-level table, a summary dictionary 
 
-    point_df = point_logger(test_data, kernel_name=kernel_name, mu=mu, std=standard_deviation, acquisition=acquisition, next_idx=next_idx, run_id=run_id)
-    summary_df = summary_logger(run_id=run_id, kernel_name=kernel_name, noise_std=noise_std, kappa=kappa, next_idx=next_idx, x_next=x_next, acquisition_max=acquisition[next_idx])
 
     return {
-        "point_df": point_df,
-        "summary_df": summary_df,
         "mu": mu,
         "cov": cov,
         "std": standard_deviation,
         "acquisition": acquisition,
         "next_idx": next_idx,
-        "x_next": x_next
+        "x_next": x_next,
+        "run_id": run_id,
+        "kernel_name": kernel_name
     }
 
 def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
@@ -278,16 +286,16 @@ def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
         results.append(result)
 
    
-    plot_bo(
-        test_data=test_data,
-        mu=result["mu"],
-        std=result["std"],
-        acquisition=result["acquisition"],
-        next_idx=result["next_idx"],
-        objective_function=objective_function,
-        train_x=train_x,
-        train_y=train_y
-    )
+        plot_bo(
+            test_data=test_data,
+            mu=result["mu"],
+            std=result["std"],
+            acquisition=result["acquisition"],
+            next_idx=result["next_idx"],
+            objective_function=objective_function,
+            train_x=train_x,
+            train_y=train_y
+        )
 
     return results, train_x, train_y
 
@@ -376,18 +384,47 @@ def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acqu
 
     return df
 
-results, final_x, final_y = run_1d_bo_loop(
+# results_se, final_x_se, final_y_se = run_1d_bo_loop(
+#     objective_function=one_over_x,
+#     kernel_function=squared_exponential_kernel,
+#     kernel_name="Square Exponential",
+#     train_data_x=np.array([1.0, 2.0, 4.0]),
+#     train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
+#     test_data=np.linspace(0.001, 5.0, 200),
+#     noise_std=0.01,
+#     kappa=2.0,
+#     n_iterations=5,
+#     length_scale=1.0,
+#     sigma=1.0,
+# )
+
+# results_lin, final_x_lin, final_y_lin = run_1d_bo_loop(
+#     objective_function=one_over_x,
+#     kernel_function=linear_kernel,
+#     kernel_name="Linear",
+#     train_data_x=...,
+#     train_data_y=...,
+#     test_data=...,
+#     noise_std=0.01,
+#     kappa=2.0,
+#     n_iterations=5,
+#     sigma_linear=1.0,
+# )
+
+results_sum, final_x_sum, final_y_sum = run_1d_bo_loop(
     objective_function=one_over_x,
     kernel_function=squared_exponential_kernel,
-    kernel_name="Square Exponential",
-    train_data_x=np.array([1.0, 2.0, 4.0]),
-    train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
-    test_data=np.linspace(0.001, 5.0, 200),
+    kernel_name="SE+Linear",
+    train_data_x=train_data_x,
+    train_data_y=train_data_y,
+    test_data=test_data,
     noise_std=0.01,
     kappa=2.0,
     n_iterations=5,
-    length_scale=1.0,
-    sigma=1.0
+    # ell_se=1.0,
+    sigma_se=1.0,
+    length_scale=1.0
+    # sigma_linear=1.0,
 )
 
 def edge_case():    # What is a safe measurable value (i.e., how high off in the y axis is acceptable and usable in practice?)
