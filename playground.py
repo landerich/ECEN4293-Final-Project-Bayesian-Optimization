@@ -177,18 +177,6 @@ def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
 
-# mu_s, cov_post = gp_posterior(X_train=X_train_two, y_train=y_train_two, X_test=X_test_two, ell=ell_two, sigma=sigma_two, noise_std=noise_std_two)
-# std_s = posterior_std(cov_post)
-# ucb_vals = acquisition_ucb(mu_s, std_s, kappa_two)
-# next_idx = [np.argmax(ucb_vals)]
-
-# print(f"\n\t------------------------------")
-# print(f"MU_S:\t{mu_s}\n COV_POST:\t{cov_post}")
-# print(f"\nSTD:\t{std_s}")
-# print(f"\nUBC VALUES:\t{ucb_vals}")
-# print(f"\nNEST_IDX:\t{next_idx}")
-# print(f"\n\t------------------------------")
-
 # =================================================================
 #  Test over 1/x function for kernel switch on asymptotic behavior
 # =================================================================
@@ -323,93 +311,6 @@ def plot_bo(test_data, mu, std, acquisition, next_idx, objective_function, train
     plt.tight_layout()
     plt.show()
 
-def point_logger(x_test, kernel_name, mu, std, acquisition, next_idx, run_id=None, filename="point_default.csv"):
-    """
-    
-    """
-    x_test = np.asarray(x_test)
-    mu = np.asarray(mu)
-    std = np.asarray(std)
-    acquisition = np.asarray(acquisition)
-
-    if not (x_test.shape[0] == mu.shape[0] == std.shape[0] == acquisition.shape[0]):
-        raise ValueError("Arrays must have the same length along axis 0.")
-
-    m = x_test.shape[0]
-
-    is_selected = np.zeros(m, dtype=bool)
-
-    if 0 <= next_idx < m:
-        is_selected[next_idx] = True
-    else:
-        raise IndexError("next_idx is out of bounds for the point logger.")
-
-    data = {
-        "run_id": [run_id] * m,
-        "kernel_name": [kernel_name] * m,
-        "x_0": x_test,
-        "mu": mu,
-        "std": std,
-        "acquisition": acquisition,
-        "selected": is_selected,
-    }
-
-    df = pd.DataFrame(data)
-
-    file_exists = os.path.exists(filename)
-
-    df.to_csv(filename, mode='a', index=False, header=not file_exists)
-
-    return df
-
-def summary_logger(run_id, kernel_name, noise_std, kappa, next_idx, x_next, acquisition_max, filename = "summary_default.csv"):
-    """
-    
-    """
-    data = {
-        "run_id": [run_id],
-        "kernel_name": [kernel_name],
-        "noise_std": [noise_std],
-        "kappa": [kappa],
-        "next_idx": [next_idx],
-        "x_next": [x_next],
-        "acquisition_max": [acquisition_max]
-    }
-
-    df = pd.DataFrame(data)
-
-    file_exists = os.path.isfile(filename)
-
-    df.to_csv(filename, mode = 'a', index=False, header=not file_exists)
-
-    return df
-
-# results_se, final_x_se, final_y_se = run_1d_bo_loop(
-#     objective_function=one_over_x,
-#     kernel_function=squared_exponential_kernel,
-#     kernel_name="Square Exponential",
-#     train_data_x=np.array([1.0, 2.0, 4.0]),
-#     train_data_y=one_over_x(np.array([1.0, 2.0, 4.0])),
-#     test_data=np.linspace(0.001, 5.0, 200),
-#     noise_std=0.01,
-#     kappa=2.0,
-#     n_iterations=5,
-#     length_scale=1.0,
-#     sigma=1.0,
-# )
-
-# results_lin, final_x_lin, final_y_lin = run_1d_bo_loop(
-#     objective_function=one_over_x,
-#     kernel_function=linear_kernel,
-#     kernel_name="Linear",
-#     train_data_x=...,
-#     train_data_y=...,
-#     test_data=...,
-#     noise_std=0.01,
-#     kappa=2.0,
-#     n_iterations=5,
-#     sigma_linear=1.0,
-# )
 
 results_sum, final_x_sum, final_y_sum = run_1d_bo_loop(
     objective_function=one_over_x,
