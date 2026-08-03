@@ -5,80 +5,83 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import os
 
-# ====================================================================
-# ====================================================================
-# ++++++++++++++++++++++++ Testing Values ++++++++++++++++++++++++++++
+# =================================================================
+# ====================== Testing Values ===========================
+# =================================================================
+#  Test over 1/x function for kernel switch on asymptotic behavior
 
 rng = np.random.default_rng()
-test_vector1 = rng.uniform(low=-4, high=4, size=4)
-test_vector2 = rng.uniform(low = -7, high = 7, size = 3)
 
-# ==================== Set 1 of testing values ======================
+def test_function(x, y):
+    return 1/(x*y)
 
-X_train_one = np.array([0.0, 0.15, 0.35, 0.55, 0.75, 0.95])
-X_test_one = np.linspace(0.0, 1.0, 100)
-y_train_one = np.array([0.00, 0.78, 0.81, -0.28, -1.02, -0.18])
+np.random.seed(42)
+x_data = np.linspace(0, 5, 20)
+y_data = np.linspace(0, 5, 20)
+x, y = np.meshgrid(x_data, y_data)
+z = test_function(x_data, y_data)
 
-ell_one = 0.25
-sigma_one = 1.0
-noise_std_one = 0.08
-kappa_one = 0.532
 
-# =================== Set 2 of testing values =======================
 
-X_train_two = np.array([0.00, 0.12, 0.27, 0.41, 0.63, 0.84])
-y_train_two = np.array([0.02, 0.66, 0.93, 0.61, -0.42, -0.95])
-X_test_two = np.linspace(0.0, 1.0, 100)
+noise_level = 0.0284
+x_noisy = x + np.random.normal(0, noise_level, x.shape)
+y_noisy = y + np.random.normal(0, noise_level, y.shape)
+z_noisy = z + np.random.normal(0, noise_level, z.shape)
 
-ell_two = 0.20
-sigma_two = 1.0
-noise_std_two = 0.06
-kappa_two = 2.5
 
-# ====================================================================
-# ====================================================================
+# =================================================================
+# =================================================================
 
 np.set_printoptions(precision=2, suppress=True)
 
-
-def squared_exponential_kernel(x1: float, x2: float, length_scale: float = 1.0, sigma_se: float = 1.0) -> float:
+def squared_exponential_kernel(x1:np.ndarray,
+                               x2:np.ndarray,
+                               length:float = 1.0,
+                               sigma_se:float = 1.0) -> float:
     """ 
     Kernel function: Covariance function that returns the scalar covariance value.
     ----------
     Args:
-        x1: Scalar input 1
-        x2: Scalar input 2
-        length_scale: 
+        x1: 2D input vector (2,)
+        x2: 2D input vector (2,)
+        length: Length scale
         sigma_se: signal variance / amplitude
 
     Returns:
         float: Covariance between x1 and x2 under the squared sum exponential kernel.
 
     """
-    cov = (x1 - x2) ** 2
-    lgt = 2*(length_scale**2)
+    diff = x1 - x2
+    distance = np.dot(diff, diff)
+    lgt = 2*(length**2)
     
-    return sigma_se**2 * np.exp(-(cov/lgt))
+    return sigma_se**2 * np.exp(-(distance/lgt))
 
-def linear_kernel(x1: float, x2: float, sigma_linear:  float = 1.0) -> float:
-    return sigma_linear**2 * x1 * x2
+def linear_kernel(x1:np.ndarray,
+                  x2:np.ndarray,
+                  sigma_linear:float = 1.0) -> float:
+    """
+    
+    """
+    return sigma_linear**2 * np.dot(x1, x2)
 
-def build_covariance_matrix(arr1, arr2, kernel_function, **kernel_parameters): 
+def build_covariance_matrix(arr1,
+                            arr2,
+                            kernel_function,
+                            **kernel_parameters): 
     """
     Covariance Matrix: Returns a kernel matrix n x m (len(arr1) x len(arr2)).
     ----------
     Args:
-        arr1: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
-        arr2: Array of data points to compute pairwise covariance matrix between two 1D input arrays.
-        ell: Argument needed for the squared exppnential kernel.
-        sigma: Argument needed for the squared exponential kernel.
-
+        arr1: Array of data points, shape (n, d). Each row is one input vector.
+        arr2: Array of data points, shape (m, d). Each row is one input vector.
+        
     Returns:
         cov : n x m matrix expressing the covariance of arr1 and arr2
 
     """
-    arr1 = np.atleast_1d(arr1)
-    arr2 = np.atleast_1d(arr2)
+    arr1 = np.asarray(arr1)
+    arr2 = np.asarray(arr2)
 
     n = len(arr1)
     m = len(arr2)
@@ -90,16 +93,22 @@ def build_covariance_matrix(arr1, arr2, kernel_function, **kernel_parameters):
 
     return cov
 
-def gp_posterior(X_train, y_train, X_test, noise_std: float, kernel_function, **kernel_parameters):
+def gp_posterior(X_train,
+                 y_train,
+                 X_test,
+                 noise_std: float,
+                 kernel_function,
+                 **kernel_parameters):
 
     """
     Gaussian Process Posterior:
     ----------
     Args:
-        X_tn: Shape (n,) for current 1D version.
+        X_train: Shape (n, d) for current 2D version.
 
     Returns:
-        Mean of shape (m,) and covariance shape (m, m
+        mu_s: Mean of shape (m,) and 
+        cov_posterior: Covariance shape (m, m)
     
     """
 
@@ -107,10 +116,10 @@ def gp_posterior(X_train, y_train, X_test, noise_std: float, kernel_function, **
     X_tt = np.asarray(X_test)
     Y_tn = np.asarray(y_train)
 
-    # if (len(X_tn) != len(Y_tn)):    # Verify that we have a training point x for every y, change for a more robust approach whenever expanding to multiple dimensions
+    if (X_tn.shape[0] != Y_tn.shape[0]):    # Verify that we have a training point x for every y, change for a more robust approach whenever expanding to multiple dimensions
 
-    #     raise ValueError("Matrices X_train and Y_train do not have the same dimensions" \
-    #     "try with two matrices that have the same dimensions.")
+        raise ValueError("Samples X_train and y_train must have the same number of samples\n" \
+        f"got {X_tn.shape[0]} and {Y_tn.shape[0]}.")
 
     K_xx = build_covariance_matrix(X_tn, X_tn, kernel_function, **kernel_parameters)
     K_xs = build_covariance_matrix(X_tn, X_tt, kernel_function, **kernel_parameters)
@@ -142,8 +151,10 @@ def posterior_std(cov_post):
     -------------------
     The posterior standard deviation vector.
     """
-    cov_posterior = np.asarray(cov_post)
-    return np.sqrt(np.diag(cov_posterior))
+    cov_posterior = np.asanyarray(cov_post)
+    diag = np.diag(cov_posterior)
+    diag = np.maximum(diag, 0.0)
+    return np.sqrt(diag)
 
 def acquisition_ucb(mu, std, kappa):     # Expected improvement is the best choice, but start with UCB
     """ Returns the scoring vector of points to sample next.
@@ -177,33 +188,9 @@ def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
 
-# =================================================================
-#  Test over 1/x function for kernel switch on asymptotic behavior
-# =================================================================
 
-def one_over_x(x):
-    return 1/x
 
-train_data_x = np.array([
-0.5,
-0.75,
-1.0,
-1.25,
-1.5,
-1.75,
-2.0,
-2.25,
-2.5,
-2.75,
-3.0,
-3.25,
-3.5,
-3.75,
-4.0,
-])
-train_data_y = one_over_x(train_data_x)
 
-test_data = np.linspace(0.001, 6.0, 1000)
 
 # =================================================================
 #                        Testing function
@@ -243,90 +230,9 @@ def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data,
         "kernel_name": kernel_name
     }
 
-def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
-                   train_data_x, train_data_y, test_data, noise_std, kappa,
-                   n_iterations, **kernel_parameters):
-
-    train_x = np.asarray(train_data_x).copy()
-    train_y = np.asarray(train_data_y).copy()
-
-    results = []
-
-    for i in range(n_iterations):
-        result = test_bo(
-            kernel_function=kernel_function,
-            kernel_name=kernel_name,
-            train_data_x=train_x,
-            train_data_y=train_y,
-            test_data=test_data,
-            noise_std=noise_std,
-            kappa=kappa,
-            run_id=i + 1,
-            **kernel_parameters
-        )
-
-        x_next = result["x_next"]
-        y_next = objective_function(x_next)
-
-        train_x = np.append(train_x, x_next)
-        train_y = np.append(train_y, y_next)
-
-        results.append(result)
-
-   
-        plot_bo(
-            test_data=test_data,
-            mu=result["mu"],
-            std=result["std"],
-            acquisition=result["acquisition"],
-            next_idx=result["next_idx"],
-            objective_function=objective_function,
-            train_x=train_x,
-            train_y=train_y
-        )
-
-    return results, train_x, train_y
-
-def plot_bo(test_data, mu, std, acquisition, next_idx, objective_function, train_x=None, train_y=None):
-    true_y = objective_function(test_data)
-
-    fig, ax = plt.subplots(2, 1, figsize=(13, 10), sharex=True)
-
-    ax[0].plot(test_data, true_y, label="True curve: 1/x", color="black", linewidth=2)
-    ax[0].plot(test_data, mu, label="Posterior mean", color="tab:blue")
-    ax[0].fill_between(test_data, mu - 2*std, mu + 2*std, alpha=0.2, label="Uncertainty", color="tab:blue")
-    ax[0].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
-
-    if train_x is not None and train_y is not None:
-        ax[0].scatter(train_x, train_y, color="green", s=50, label="Observed points", zorder=5)
-
-    ax[0].set_title("Posterior vs True Curve")
-    ax[0].legend()
-
-    ax[1].plot(test_data, acquisition, label="Acquisition", color="tab:orange")
-    ax[1].axvline(test_data[next_idx], color="red", linestyle="--", label="Selected point")
-    ax[1].set_title("Acquisition")
-    ax[1].legend()
-
-    plt.tight_layout()
-    plt.show()
 
 
-results_sum, final_x_sum, final_y_sum = run_1d_bo_loop(
-    objective_function=one_over_x,
-    kernel_function=squared_exponential_kernel,
-    kernel_name="SE+Linear",
-    train_data_x=train_data_x,
-    train_data_y=train_data_y,
-    test_data=test_data,
-    noise_std=0.01,
-    kappa=2.0,
-    n_iterations=5,
-    # ell_se=1.0,
-    sigma_se=1.0,
-    length_scale=1.0
-    # sigma_linear=1.0,
-)
+
 
 def edge_case():    # What is a safe measurable value (i.e., how high off in the y axis is acceptable and usable in practice?)
 

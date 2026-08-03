@@ -141,7 +141,7 @@ def posterior_std(cov_post):
     cov_posterior = np.asanyarray(cov_post)
     diag = np.diag(cov_posterior)
     diag = np.maximum(diag, 0.0)
-    return np.sqrt(diag)  # Floating point error negatives coming from the sqrt, check this later
+    return np.sqrt(diag)  # Floating point error negatives fixed
 
 # ==============================================================
 #                        Acquisition function
@@ -194,3 +194,5 @@ def combined_kernel_product(xin1,
     k_se = squared_exponential_kernel(x1= xin1, x2= xin2, length= length_se, sigma_se= sigma_se)
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
+
+# Great source of Gaussian Process explanation: https://distill.pub/2019/visual-exploration-gaussian-processes/
