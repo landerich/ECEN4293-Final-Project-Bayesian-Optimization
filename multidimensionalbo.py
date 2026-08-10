@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import math
 
 # ==============================================================
 #             Kernel function (squared exponential)
@@ -196,3 +197,24 @@ def combined_kernel_product(xin1,
     return k_se * k_linear
 
 # Great source of Gaussian Process explanation: https://distill.pub/2019/visual-exploration-gaussian-processes/
+
+# Marcus contour search function replica using BO
+
+def bo_2d_contour(chosen_func, setup_min, setup_max, hold_min, hold_max, c2q_threshold=math.inf, n_samples=40):
+
+
+    # Verify the max and min points of the setup and hold
+    if setup_min > setup_max:
+        setup_min, setup_max = setup_max, setup_min
+
+    if hold_min > hold_max:
+        hold_min, hold_max = hold_max, hold_min
+
+    setup_range = np.linspace(setup_min, setup_max, n_samples)
+    hold_range = np.linspace(hold_min, hold_max, n_samples)
+
+    _cache = {}
+
+
+
+    return None
