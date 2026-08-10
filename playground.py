@@ -229,7 +229,7 @@ def two_d_objective(x_vec, eps=1e-6):
     prod = x1 * x2
     R = (x1**2 + x2**2)
     prod_safe = prod if abs(prod) > eps else eps
-    return 1.0 / prod_safe + np.sin(R) #* np.cos(x2)
+    return min(2, 1.0 / prod_safe) # + np.sin(R)) #* np.cos(x2) Use a white noise gaussian model, check how BO works with that.
 
 def visualize_2d_bo(X1, X2, MU, ACQ, train_x, train_y, x_next):
     """

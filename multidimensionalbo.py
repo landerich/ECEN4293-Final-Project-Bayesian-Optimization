@@ -200,7 +200,7 @@ def combined_kernel_product(xin1,
 
 # Marcus contour search function replica using BO
 
-def bo_2d_contour(chosen_func, setup_min, setup_max, hold_min, hold_max, c2q_threshold=math.inf, n_samples=40):
+def bo_2d_contour(probe_func, setup_min, setup_max, hold_min, hold_max, c2q_threshold=math.inf, n_samples=40):
 
 
     # Verify the max and min points of the setup and hold
@@ -213,8 +213,27 @@ def bo_2d_contour(chosen_func, setup_min, setup_max, hold_min, hold_max, c2q_thr
     setup_range = np.linspace(setup_min, setup_max, n_samples)
     hold_range = np.linspace(hold_min, hold_max, n_samples)
 
-    _cache = {}
+    # We might not need a cache
+    # _cache = {}
+
+    # def _run_cached(si, hi, s_s, h_s):
+    #     key = (si, hi)
+    #     for key in _cache:
+    #         return _cache[key], False
+    #     c2q = probe_func(s_s, h_s)
+    #     _cache[key] = c2q
+    #     return c2q, True
+
+    # Define Sweeps across the c2q grid (Hold and Setup)
+
+    # --- Sweep A: Hold outer, setup inner (left to right, breaking at first success) ---
+        c2q_a = np.full((n_hold, n_setup), np.nan)
+        latched_a = np.zeros((n_hold, n_setup), dtype=bool)
+        simulated_a = np.zeros((n_hold, n_setup), dtype=bool)
 
 
+
+
+        return None
 
     return None
