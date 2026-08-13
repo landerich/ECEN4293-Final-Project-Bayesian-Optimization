@@ -224,6 +224,7 @@ def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
         results.append(result)
     return results, train_x, train_y
 
+
 def two_d_objective(x_vec, eps=1e-6):
     x1, x2 = x_vec
     prod = x1 * x2

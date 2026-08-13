@@ -213,12 +213,15 @@ def bo_2d_contour(probe_func, setup_min, setup_max, hold_min, hold_max, c2q_thre
     setup_range = np.linspace(setup_min, setup_max, n_samples)
     hold_range = np.linspace(hold_min, hold_max, n_samples)
 
+    n_setup = len(setup_range)
+    n_hold = len(hold_range)
+
     # We might not need a cache
     # _cache = {}
 
     # def _run_cached(si, hi, s_s, h_s):
     #     key = (si, hi)
-    #     for key in _cache:
+    #     if key in _cache:
     #         return _cache[key], False
     #     c2q = probe_func(s_s, h_s)
     #     _cache[key] = c2q
@@ -227,13 +230,38 @@ def bo_2d_contour(probe_func, setup_min, setup_max, hold_min, hold_max, c2q_thre
     # Define Sweeps across the c2q grid (Hold and Setup)
 
     # --- Sweep A: Hold outer, setup inner (left to right, breaking at first success) ---
-        c2q_a = np.full((n_hold, n_setup), np.nan)
-        latched_a = np.zeros((n_hold, n_setup), dtype=bool)
-        simulated_a = np.zeros((n_hold, n_setup), dtype=bool)
+    c2q_a = np.full((n_hold, n_setup), np.nan)
+    latched_a = np.zeros((n_hold, n_setup), dtype=bool)
+    simulated_a = np.zeros((n_hold, n_setup), dtype=bool)
 
+    
 
-
-
-        return None
 
     return None
+
+def single_BO(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, **kernel_parameters):
+    mu, cov = gp_posterior(train_data_x, train_data_y, test_data, noise_std, kernel_function, **kernel_parameters)
+    std = posterior_std(cov)
+    acquisition = acquisition_ucb(mu, std, kappa)
+    next_idx = np.argmax(acquisition)
+    x_next = test_data[next_idx]
+    return {
+        "mu": mu, "cov": cov, "std": std, "acquisition": acquisition,
+        "next_idx": next_idx, "x_next": x_next, "kernel_name": kernel_name
+    }
+
+def multiple_BO(objective_function, kernel_function, kernel_name,
+                   train_data_x, train_data_y, test_data, noise_std, kappa,
+                   n_iterations, **kernel_parameters):
+    train_x = np.atleast_2d(np.asarray(train_data_x, dtype=float)).copy()
+    train_y = np.asarray(train_data_y, dtype=float).copy()
+    results = []
+    for i in range(n_iterations):
+        result = single_BO(kernel_function, kernel_name, train_x, train_y, test_data,
+                         noise_std, kappa, i + 1, **kernel_parameters)
+        x_next = result["x_next"]
+        y_next = objective_function(x_next)
+        train_x = np.vstack([train_x, x_next])
+        train_y = np.append(train_y, y_next)
+        results.append(result)
+    return results, train_x, train_y
