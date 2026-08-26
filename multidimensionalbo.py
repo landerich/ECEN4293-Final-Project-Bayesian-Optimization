@@ -230,11 +230,15 @@ def bo_2d_contour(probe_func, setup_min, setup_max, hold_min, hold_max, c2q_thre
     # Define Sweeps across the c2q grid (Hold and Setup)
 
     # --- Sweep A: Hold outer, setup inner (left to right, breaking at first success) ---
-    c2q_a = np.full((n_hold, n_setup), np.nan)
-    latched_a = np.zeros((n_hold, n_setup), dtype=bool)
-    simulated_a = np.zeros((n_hold, n_setup), dtype=bool)
+    c2q_x1 = np.full((n_hold, n_setup), np.nan)
+    latched_x1 = np.zeros((n_hold, n_setup), dtype=bool)
+    simulated_x1 = np.zeros((n_hold, n_setup), dtype=bool)
 
-    
+    c2q_x2 = np.full((n_hold, n_setup), np.nan)
+    latched_x2 = np.zeros((n_hold, n_setup), dtype=bool)
+    simulated_x2 = np.zeros((n_hold, n_setup), dtype=bool)
+
+
 
 
     return None
@@ -265,3 +269,5 @@ def multiple_BO(objective_function, kernel_function, kernel_name,
         train_y = np.append(train_y, y_next)
         results.append(result)
     return results, train_x, train_y
+
+# Change the for loop to a while loop.
