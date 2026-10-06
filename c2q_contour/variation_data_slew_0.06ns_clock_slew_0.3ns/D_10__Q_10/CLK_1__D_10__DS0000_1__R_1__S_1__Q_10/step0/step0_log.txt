@@ -1,0 +1,10 @@
+Cell:      DFFSR
+Variation: data_slew=0.06 ns, clock_slew=0.3 ns
+Path:      D_10__Q_10
+Constants: tolerance=0.01 ns, step=0.005 ns, c_load=0.24 pF, n_sweep_samples=40
+
+State:     CLK=1, D=10, DS0000=1, R=1, S=1, Q=10
+
+step0 : measure ref c2q at setup=hold= 3.211983742596518 ns
+  ref c2q   = 0.856 ns
+  threshold = 1.027 ns (ref c2q * 1.2)

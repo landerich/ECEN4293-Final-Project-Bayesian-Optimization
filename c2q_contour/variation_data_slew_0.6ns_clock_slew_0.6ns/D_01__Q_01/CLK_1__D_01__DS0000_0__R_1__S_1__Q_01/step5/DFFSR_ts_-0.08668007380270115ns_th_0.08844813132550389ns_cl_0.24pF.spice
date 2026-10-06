@@ -1,0 +1,19 @@
+.title get_c2q
+.include /home/rich/Charlib/CharLib/test/examples/osu350/spice/osu035_stdcells.sp
+.include /home/rich/Charlib/CharLib/test/examples/osu350/models/ami035.m
+VDD VDD 0 3.3V
+VNW VNW 0 3.3V
+VPW VPW 0 0.0V
+Vo_cap vout wout 0
+Cc_load wout 0 0.24pF
+Vclk vclk 0 PWL(0s 0.0V 2.4958840287614015e-09s 0.0V 3.4958840287614014e-09s 3.3V 5.991768057522803e-09s 3.3V 6.991768057522803e-09s 0.0V 1.1983536115045606e-08s 0.0V 1.2983536115045606e-08s 3.3V)
+Vdata vdata 0 PWL(0s 0.0V 1.1770216188848307e-08s 0.0V 1.2770216188848306e-08s 3.3V 1.3371984246371109e-08s 3.3V 1.437198424637111e-08s 0.0V)
+Xdut vss vdd vdata vdd vdd vout vclk DFFSR
+.options TEMP = 25C
+.options TNOM = 25C
+.options nopage
+.options nomod
+.options rshunt = 1000000000.0
+.options trtol = 1
+.tran 0.15ns 1.4867868275132511e-08s 0s
+.end

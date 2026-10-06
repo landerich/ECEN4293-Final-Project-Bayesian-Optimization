@@ -1,0 +1,19 @@
+.title sim_latch
+.include /home/rich/Charlib/CharLib/test/examples/osu350/spice/osu035_stdcells.sp
+.include /home/rich/Charlib/CharLib/test/examples/osu350/models/ami035.m
+VDD VDD 0 3.3V
+VNW VNW 0 3.3V
+VPW VPW 0 0.0V
+Vo_cap vout wout 0
+Cc_load wout 0 0.24pF
+Vclk vclk 0 PWL(0s 0.0V 2.4000000000000003e-07s 0.0V 2.4100000000000005e-07s 3.3V 4.810000000000001e-07s 3.3V 4.820000000000001e-07s 0.0V 9.620000000000003e-07s 0.0V 9.630000000000004e-07s 3.3V)
+Vdata vdata 0 PWL(0s 3.3V 9.501000000000002e-07s 3.3V 9.521000000000003e-07s 0.0V 9.773000000000004e-07s 0.0V 9.793000000000003e-07s 3.3V)
+Xdut vss vdd vdata vdd vdd vout vclk DFFSR
+.options TEMP = 25C
+.options TNOM = 25C
+.options nopage
+.options nomod
+.options rshunt = 1000000000.0
+.options trtol = 1
+.tran 0.15ns 1.2153000000000002e-06s 0s
+.end

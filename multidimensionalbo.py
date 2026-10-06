@@ -271,3 +271,19 @@ def multiple_BO(objective_function, kernel_function, kernel_name,
     return results, train_x, train_y
 
 # Change the for loop to a while loop.
+
+# def sweep_with_bo():
+#     -----------
+#     all_bo_code
+#     -----------
+#     latched = result
+#     return latched
+
+def acquisition_straddle(mu, std, threshold, beta=1.96):
+    mu_straddle = np.asarray(mu)
+    std_straddle = np.asarray(std)
+
+    if mu_straddle.shape != std_straddle.shape:
+        raise ValueError("Mu and STD vectors must be the same size to compute straddle.")
+
+    return beta * std_straddle - np.abs(mu_straddle - threshold)

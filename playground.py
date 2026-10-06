@@ -1,10 +1,8 @@
 import numpy as np
 import scipy as sp
-import pandas as pd
+# import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import datetime as dt
-# import os
 
 # =================================================================
 # ====================== Testing Values ===========================
@@ -189,7 +187,14 @@ def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
     k_linear = linear_kernel(x1= xin1, x2= xin2, sigma_linear= sigma_linear)
     return k_se * k_linear
 
+def acquisition_straddle(mu, std, threshold, beta=1.96):
+    mu_straddle = np.asarray(mu)
+    std_straddle = np.asarray(std)
 
+    if mu_straddle.shape != std_straddle.shape:
+        raise ValueError("Mu and STD vectors must be the same size to compute straddle.")
+
+    return beta * std_straddle - np.abs(mu_straddle - threshold)
 
 
 
@@ -197,10 +202,10 @@ def combined_kernel_product(xin1, xin2, ell_se, sigma_se, sigma_linear):
 #                        Testing function
 # =================================================================
 
-def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, kappa, run_id, **kernel_parameters):
+def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data, noise_std, threshold, run_id, **kernel_parameters):
     mu, cov = gp_posterior(train_data_x, train_data_y, test_data, noise_std, kernel_function, **kernel_parameters)
     std = posterior_std(cov)
-    acquisition = acquisition_ucb(mu, std, kappa)
+    acquisition = acquisition_straddle(mu, std, threshold)
     next_idx = np.argmax(acquisition)
     x_next = test_data[next_idx]
     return {

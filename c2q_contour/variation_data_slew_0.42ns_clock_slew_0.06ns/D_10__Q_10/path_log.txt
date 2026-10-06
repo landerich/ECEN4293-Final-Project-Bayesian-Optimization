@@ -1,0 +1,17 @@
+Cell:      DFFSR
+Variation: data_slew=0.42 ns, clock_slew=0.06 ns
+Path:      D_10__Q_10
+Constants: tolerance=0.01 ns, step=0.005 ns, c_load=0.24 pF, n_sweep_samples=40
+
+States derived from this path:
+    CLK=1, D=10, DS0000=1, R=1, S=1, Q=10
+
+Per-state results:
+    state: CLK=1, D=10, DS0000=1, R=1, S=1, Q=10
+        knee point = (0.9296 ns, -0.9283 ns)
+        setup = 0.9296042537809811 ns
+        hold  = -0.9283444641677367 ns
+
+Final selection (worst-case across states for current path):
+    setup = 0.9296042537809811 ns  (from state: CLK=1, D=10, DS0000=1, R=1, S=1, Q=10)
+    hold  = -0.9283444641677367 ns  (from state: CLK=1, D=10, DS0000=1, R=1, S=1, Q=10)
