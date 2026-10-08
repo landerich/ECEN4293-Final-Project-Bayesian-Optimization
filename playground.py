@@ -15,17 +15,17 @@ def test_function(x, y):
     return 1/(x*y)
 
 np.random.seed(42)
-x_data = np.linspace(0, 5, 20)
-y_data = np.linspace(0, 5, 20)
-x, y = np.meshgrid(x_data, y_data)
-z = test_function(x_data, y_data)
+# x_data = np.linspace(0, 5, 20)
+# y_data = np.linspace(0, 5, 20)
+# x, y = np.meshgrid(x_data, y_data)
+# z = test_function(x_data, y_data)
 
 
 
-noise_level = 0.0284
-x_noisy = x + np.random.normal(0, noise_level, x.shape)
-y_noisy = y + np.random.normal(0, noise_level, y.shape)
-z_noisy = z + np.random.normal(0, noise_level, z.shape)
+# noise_level = 0.0284
+# x_noisy = x + np.random.normal(0, noise_level, x.shape)
+# y_noisy = y + np.random.normal(0, noise_level, y.shape)
+# z_noisy = z + np.random.normal(0, noise_level, z.shape)
 
 
 # =================================================================
@@ -214,14 +214,14 @@ def test_bo(kernel_function, kernel_name, train_data_x, train_data_y, test_data,
     }
 
 def run_1d_bo_loop(objective_function, kernel_function, kernel_name,
-                   train_data_x, train_data_y, test_data, noise_std, kappa,
-                   n_iterations, **kernel_parameters):
+                   train_data_x, train_data_y, test_data, noise_std,
+                   n_iterations, threshold=1.96, **kernel_parameters):
     train_x = np.atleast_2d(np.asarray(train_data_x, dtype=float)).copy()
     train_y = np.asarray(train_data_y, dtype=float).copy()
     results = []
     for i in range(n_iterations):
         result = test_bo(kernel_function, kernel_name, train_x, train_y, test_data,
-                         noise_std, kappa, i + 1, **kernel_parameters)
+                         noise_std,  i + 1, threshold=1.96, **kernel_parameters)
         x_next = result["x_next"]
         y_next = objective_function(x_next)
         train_x = np.vstack([train_x, x_next])
@@ -332,7 +332,7 @@ def plot_chosen_point_3d(X1, X2, objective_function, x_next, train_x=None, train
 
 def run_2d_bo_demo(n_iterations: int = 10,
                    noise_std: float = 0.01,
-                   kappa: float = 2.0,
+                   threshold: float = 1.96,
                    kernel_function=squared_exponential_kernel,
                    kernel_name: str = "SE 2D",
                    length: float = 1.0,
@@ -363,7 +363,7 @@ def run_2d_bo_demo(n_iterations: int = 10,
         train_data_y=train_y,
         test_data=X_test,
         noise_std=noise_std,
-        kappa=kappa,
+        threshold=threshold,
         n_iterations=n_iterations,
         length=length,
         sigma_se=sigma_se
